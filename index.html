@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="IEvrCKIiT8b6tZA7WyVUV3">
+<head data-page-node-id="hLp0TwkNhoBQQ4ujz1DH9p">
+<meta charset="UTF-8" data-page-node-id="vBuQwhukV2SU0BndbEfwpH">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" data-page-node-id="2bIlBClqqDKxnT2rr8ZYdN">
+<title>Global Demand Eye · 全球需求洞察方法论</title>
+<meta name="description" content="一套可复用的外贸需求洞察方法论：用 DPI 需求潜力指数回答「什么产品 × 哪个国家 × 现在更容易卖」。" data-page-node-id="ldcZ8ysT7w2BpTGIAM40GC">
+<style>
+  :root {
+    --navy: #0f2540; --navy2: #1a4a7a; --red: #c0392b; --bg: #f5f6f8;
+    --ink: #1a1d24; --muted: #5c6b7d; --line: #e2e8f0; --green: #27ae60; --amber: #e8a13c;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--ink); line-height: 1.75; }
+  .container { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+
+  /* nav */
+  nav { position: sticky; top: 0; z-index: 50; background: rgba(15,37,64,.96); backdrop-filter: blur(8px); }
+  nav .container { display: flex; align-items: center; justify-content: space-between; height: 56px; }
+  nav .logo { color: #fff; font-weight: 800; font-size: 17px; letter-spacing: .5px; }
+  nav .logo span { color: #ff9a8a; }
+  nav .links a { color: rgba(255,255,255,.75); text-decoration: none; font-size: 13.5px; margin-left: 22px; transition: color .2s; }
+  nav .links a:hover { color: #fff; }
+  @media (max-width: 720px) { nav .links { display: none; } }
+
+  /* hero */
+  .hero { background: linear-gradient(135deg, #0f2540 0%, #1a4a7a 55%, #c0392b 135%); color: #fff; padding: 84px 0 72px; }
+  .hero .tag { display: inline-block; border: 1px solid rgba(255,255,255,.35); background: rgba(255,255,255,.1); padding: 4px 16px; border-radius: 20px; font-size: 13px; margin-bottom: 22px; }
+  .hero h1 { font-size: 40px; font-weight: 800; line-height: 1.3; margin-bottom: 18px; }
+  .hero h1 .q { color: #ffd9d2; }
+  .hero p { font-size: 16px; opacity: .88; max-width: 680px; }
+  .hero .formula-strip { margin-top: 34px; display: inline-block; background: rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.2); border-radius: 12px; padding: 16px 24px; font-family: "SF Mono", Menlo, monospace; font-size: 15px; }
+  .hero .formula-strip b { color: #ffb4a6; }
+  @media (max-width: 720px) { .hero h1 { font-size: 28px; } .hero .formula-strip { font-size: 12px; } }
+
+  section { padding: 64px 0 8px; }
+  .sec-head { margin-bottom: 30px; }
+  .sec-head .en { font-size: 12px; letter-spacing: 2px; color: var(--red); font-weight: 700; text-transform: uppercase; }
+  .sec-head h2 { font-size: 27px; color: var(--navy); margin-top: 4px; }
+  .sec-head p { color: var(--muted); font-size: 14.5px; margin-top: 6px; max-width: 720px; }
+
+  /* signal pyramid */
+  .pyramid { display: flex; flex-direction: column; gap: 10px; }
+  .pyr { display: flex; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(15,37,64,.08); }
+  .pyr .lv { flex: 0 0 150px; padding: 16px; color: #fff; font-weight: 700; font-size: 14.5px; display: flex; flex-direction: column; justify-content: center; }
+  .pyr .lv small { font-weight: 400; opacity: .85; font-size: 11.5px; }
+  .pyr .bd { padding: 14px 18px; font-size: 13.5px; flex: 1; }
+  .pyr .bd b { color: var(--navy); }
+  .pyr .bd .src { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+  .pyr .stars { flex: 0 0 100px; display: flex; align-items: center; justify-content: center; color: var(--amber); font-size: 13px; letter-spacing: 1px; }
+  @media (max-width: 720px) { .pyr .lv { flex-basis: 110px; } .pyr .stars { display: none; } }
+
+  /* dpi dimensions */
+  .dims { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  @media (max-width: 900px) { .dims { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .dims { grid-template-columns: 1fr; } }
+  .dim { background: #fff; border-radius: 12px; padding: 18px 16px; box-shadow: 0 1px 3px rgba(15,37,64,.08); border-top: 4px solid var(--navy2); }
+  .dim.minus { border-top-color: var(--red); }
+  .dim.own { border-top-color: var(--green); }
+  .dim .w { font-size: 22px; font-weight: 800; color: var(--navy); }
+  .dim .n { font-weight: 700; margin: 2px 0 6px; font-size: 14.5px; }
+  .dim .d { font-size: 12.5px; color: var(--muted); line-height: 1.6; }
+
+  .note { background: #fff5e6; border-left: 4px solid var(--amber); padding: 14px 18px; border-radius: 0 10px 10px 0; margin-top: 22px; font-size: 14px; }
+  .note b { color: #b36a00; }
+  .note.green { background: #eef9f0; border-left-color: var(--green); }
+  .note.green b { color: #1d7a46; }
+
+  /* calculator */
+  .calc { background: #fff; border-radius: 16px; box-shadow: 0 4px 24px rgba(15,37,64,.1); padding: 34px 36px; }
+  @media (max-width: 720px) { .calc { padding: 22px 18px; } }
+  .calc .row-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 26px; }
+  @media (max-width: 560px) { .calc .row-inputs { grid-template-columns: 1fr; } }
+  .calc input[type=text] { width: 100%; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 10px; font-size: 15px; outline: none; transition: border .2s; }
+  .calc input[type=text]:focus { border-color: var(--navy2); }
+  .calc label.fld { font-size: 12.5px; color: var(--muted); display: block; margin-bottom: 5px; font-weight: 600; }
+  .slider-row { display: grid; grid-template-columns: 150px 1fr 64px; align-items: center; gap: 14px; margin-bottom: 14px; }
+  @media (max-width: 560px) { .slider-row { grid-template-columns: 110px 1fr 52px; } }
+  .slider-row .lab { font-size: 14px; font-weight: 600; }
+  .slider-row .lab small { display: block; color: var(--muted); font-weight: 400; font-size: 11.5px; }
+  .slider-row .val { font-family: "SF Mono", Menlo, monospace; font-size: 16px; font-weight: 700; color: var(--navy); text-align: right; }
+  input[type=range] { width: 100%; height: 6px; -webkit-appearance: none; appearance: none; background: var(--line); border-radius: 3px; outline: none; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--navy2); cursor: pointer; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+  .weights { margin-top: 26px; padding-top: 20px; border-top: 1px dashed var(--line); }
+  .weights summary { cursor: pointer; font-size: 13.5px; color: var(--navy2); font-weight: 600; }
+  .weights .wgrid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 14px; }
+  @media (max-width: 720px) { .weights .wgrid { grid-template-columns: repeat(2, 1fr); } }
+  .weights .wgrid label { font-size: 11.5px; color: var(--muted); display: block; margin-bottom: 3px; }
+  .weights input[type=number] { width: 100%; padding: 7px 9px; border: 1.5px solid var(--line); border-radius: 8px; font-size: 14px; }
+  .wsum { font-size: 12.5px; margin-top: 10px; color: var(--muted); }
+  .wsum.ok { color: var(--green); } .wsum.bad { color: var(--red); font-weight: 700; }
+
+  .result { margin-top: 30px; background: linear-gradient(135deg, #0f2540, #1a4a7a); border-radius: 14px; color: #fff; padding: 28px 30px; display: grid; grid-template-columns: auto 1fr; gap: 30px; align-items: center; }
+  @media (max-width: 640px) { .result { grid-template-columns: 1fr; text-align: center; } }
+  .result .score { text-align: center; }
+  .result .score .num { font-size: 56px; font-weight: 800; line-height: 1; }
+  .result .score .grade { display: inline-block; margin-top: 8px; font-size: 13px; font-weight: 700; padding: 3px 14px; border-radius: 14px; background: rgba(255,255,255,.15); }
+  .result .verdict h4 { font-size: 17px; margin-bottom: 6px; }
+  .result .verdict p { font-size: 13.5px; opacity: .85; }
+  .result .verdict .pair { font-size: 12.5px; opacity: .65; margin-top: 8px; font-family: Menlo, monospace; }
+
+  /* loop */
+  .loop { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; }
+  @media (max-width: 900px) { .loop { grid-template-columns: 1fr; gap: 12px; } }
+  .lp { background: #fff; border: 1.5px solid var(--line); border-radius: 12px; padding: 18px 14px; margin: 0 6px; text-align: center; font-size: 13px; position: relative; }
+  .lp .no { width: 30px; height: 30px; border-radius: 50%; background: var(--navy); color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; font-size: 14px; }
+  .lp b { display: block; color: var(--navy); margin-bottom: 4px; font-size: 14px; }
+  .lp .arr { position: absolute; right: -16px; top: 50%; transform: translateY(-50%); color: var(--red); font-size: 18px; font-weight: 800; z-index: 2; }
+  @media (max-width: 900px) { .lp .arr { display: none; } .lp { margin: 0; } }
+
+  /* roadmap */
+  .phase { border-left: 3px solid var(--red); padding: 4px 0 4px 22px; margin: 20px 0 20px 6px; position: relative; }
+  .phase::before { content: ""; position: absolute; left: -8px; top: 8px; width: 13px; height: 13px; border-radius: 50%; background: var(--red); }
+  .phase .t { font-weight: 700; font-size: 15.5px; color: var(--navy); }
+  .phase .g { font-size: 13px; color: var(--red); font-weight: 600; margin-bottom: 6px; }
+  .phase ul { margin-left: 18px; font-size: 13.5px; }
+  .phase li { margin-bottom: 4px; }
+
+  footer { background: var(--navy); color: rgba(255,255,255,.65); text-align: center; padding: 34px 20px; margin-top: 70px; font-size: 13px; }
+  footer b { color: #fff; }
+  footer a { color: #9ec3e8; text-decoration: none; }
+</style>
+</head>
+<body data-page-node-id="r5opr6QafjVuFzC8ON0cdB">
+
+<nav data-page-node-id="QuTthRYrnVWiDVU4P8e2kO">
+  <div class="container" data-page-node-id="rSzT6q8761tzJrecuDGDx7">
+    <div class="logo" data-page-node-id="YNQbATNOCQu0QMy5YVWGUk">Global Demand <span data-page-node-id="SczkfhZVIKyUPl3Lal9FXu">Eye</span></div>
+    <div class="links" data-page-node-id="bvfOhIvkzDzVhWLD3byn2g">
+      <a href="#signals" data-page-node-id="QLsc8fCORnNMgEXU4lE7KE">数据源</a>
+      <a href="#dpi" data-page-node-id="n4cuCpz7oHlGXjJSjq1TVd">DPI 模型</a>
+      <a href="#calc" data-page-node-id="eDOBJ2DCVDD18yL87TJ3RS">在线计算器</a>
+      <a href="#loop" data-page-node-id="DHEj22jfOPbuzD3FoP1DJM">验证闭环</a>
+      <a href="#roadmap" data-page-node-id="SwSfWYvEmaSe5w0Kty3PW3">落地路线</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" data-page-node-id="IZYheMNTh07hRgDJfRFRk2">
+  <div class="container" data-page-node-id="EDFjBvue8R69aJNtRItX7Y">
+    <span class="tag" data-page-node-id="p7OIjJOdq6BhohmUQ7pCWQ">外贸需求洞察方法论 · 产品无关 · 可复用</span>
+    <h1 data-page-node-id="xHTnuhLWr1ctZLSzqEWkIQ">什么<span class="q" data-page-node-id="HSXyQLlKOrQDdUiEx3WHoW">产品</span>，在哪个<span class="q" data-page-node-id="iYE3smzuwUv2TRCSOSSIz4">国家</span>，<br data-page-node-id="yfrJmaG1UToOiCyjtWpQSI">现在更容易卖得好？</h1>
+    <p data-page-node-id="XhCnIAzaD6e57Ko7ouEJq1">Global Demand Eye 是一套把「真实贸易数据 + 趋势信号 + 准入门槛 + 你的供应链优势」压缩成一个分数的方法论。任何品类都能套用——摩托车、零部件、消费电子、家居……换一个产品，重算一次分。</p>
+    <div class="formula-strip" data-page-node-id="I98uPK7IFHiWHmWqxn0GEf">
+      <b data-page-node-id="nz43cjdQmSxBh1NWPtGBDM">DPI</b> = 需求规模 + 增长动能 − 竞争烈度 − 进入门槛 + 供应链匹配
+    </div>
+  </div>
+</header>
+
+<!-- ========== signals ========== -->
+<section id="signals" data-page-node-id="ZQFGwPuYWzvEraIip5YilB">
+  <div class="container" data-page-node-id="bHOEvrCng6jv2vUFArN1WA">
+    <div class="sec-head" data-page-node-id="aDCiYHeHl4Ud39AeSiTGZr">
+      <div class="en" data-page-node-id="Nk7fXWYWGG63xMOnmiE8hW">Layer 1 · Signals</div>
+      <h2 data-page-node-id="G8NSWbvDKHOZ49mcyv7sGv">需求信号从哪来：六层数据源，按可信度排序</h2>
+      <p data-page-node-id="NfgRid0uJEwHnpvKZOulTo">海关数据回答「现在谁在真金白银地买」，趋势数据回答「未来谁可能买」，宏观门槛回答「这生意你能不能做」。三个问题都过关，才算机会。</p>
+    </div>
+    <div class="pyramid" data-page-node-id="9uP1GkKiQLRGLhJ4TUD4BN">
+      <div class="pyr" data-page-node-id="w9dStCxCaAjQZiHf9TOU4Z">
+        <div class="lv" style="background:#0f2540;" data-page-node-id="qqhQadGFlS7LCG2Co05sOn">海关提单数据<small data-page-node-id="HTRX4gMsuzF23IaAxL46Rk">Customs / Bill of Lading</small></div>
+        <div class="bd" data-page-node-id="ShWeNjuUZVLwnoRRDWIaSs"><b data-page-node-id="JaAQrnmtHq7ApZuXGEe4kt">谁在真实进口、进口量、金额、单价、频次、上游供应商。</b>这是唯一"已发生交易"的数据，一切判断的地基。<div class="src" data-page-node-id="7hr94JPHoPnotIsxwGgO8F">来源：腾道（Tantum）、ImportGenius、各国公开提单 · 成本：付费</div></div>
+        <div class="stars" data-page-node-id="UuYHTeI66u4rHofrHiI2dR">★★★★★</div>
+      </div>
+      <div class="pyr" data-page-node-id="gSCQN2PxcvcqkoF2RKNpNB">
+        <div class="lv" style="background:#1a3d63;" data-page-node-id="2wQsLAMKa45lhEHTF6GF0s">UN Comtrade<small data-page-node-id="2dvH2bXJ5xW7bOdej9FCz9">宏观贸易统计</small></div>
+        <div class="bd" data-page-node-id="FbSPeNn5CXWdpCGofJTr2a"><b data-page-node-id="IQFgDj6GCeGEJJ5lA1L1zM">某国某 HS 编码的进口总额、增速、主要来源国。</b>覆盖面最全，用来快速圈定 TOP 目标国家。<div class="src" data-page-node-id="N9Nk1ZlUTFF0klYOjw4Fxx">来源：comtradeapi.un.org · 成本：免费 API</div></div>
+        <div class="stars" data-page-node-id="aTIJogp6NkuYh9pyhYfNWV">★★★★☆</div>
+      </div>
+      <div class="pyr" data-page-node-id="IzHwJ3cd17lHZIu9KGXx1a">
+        <div class="lv" style="background:#2a5687;" data-page-node-id="zEAtWNTUoAk8h7nivGGPFu">搜索趋势<small data-page-node-id="Dv110IQQfiTdGqbUKYOcNA">Google Trends</small></div>
+        <div class="bd" data-page-node-id="lWW3hHilEW1r77JCCldPZ5"><b data-page-node-id="ol2Ish9P1LIhkQ0wG5myX7">消费端兴趣、季节性、区域热度。</b>通常领先海关数据 3-6 个月，是"未来需求"的先行指标。<div class="src" data-page-node-id="nSg9imSVXDgQwfA8rMANm7">来源：Google Trends API（pytrends）· 成本：免费</div></div>
+        <div class="stars" data-page-node-id="LIOrmeFbvkNIgpAD3u7LPG">★★★☆☆</div>
+      </div>
+      <div class="pyr" data-page-node-id="YKxMVYSFRfwPjGdDuov9Wt">
+        <div class="lv" style="background:#3a6ea5;" data-page-node-id="icUJxu2oPcdMkp717Hsugf">电商平台信号<small data-page-node-id="g0WriHyoiSsemqVfHRmzNA">B2B / B2C</small></div>
+        <div class="bd" data-page-node-id="pbUmxcZNotRVidHMBt0MIl"><b data-page-node-id="hGPF7P3UPyFxENX0PAlN9y">阿里国际站 RFQ 询盘量、Amazon / 速卖通 / Jumia（非洲）/ MercadoLibre（拉美）的销量与价格带。</b>验证终端真实售价和需求热度。<div class="src" data-page-node-id="9dDCrebxghaQNNaCyToaMF">来源：爬虫 + 第三方工具 · 成本：中</div></div>
+        <div class="stars" data-page-node-id="W4ZcXkpFQfEFQOgFIaE8tD">★★★☆☆</div>
+      </div>
+      <div class="pyr" data-page-node-id="Q31TmPcglBEFZNuzQTRCjd">
+        <div class="lv" style="background:#5a87b5;" data-page-node-id="W952iUzOHTjfyQzZMgkcyC">社媒与社群<small data-page-node-id="aMQx251KBMNMVCktxVREdk">Facebook / TikTok / YouTube</small></div>
+        <div class="bd" data-page-node-id="oGlS7PlF7cefPJWijrtlR1"><b data-page-node-id="CZnVqCSi5wtssy2zqeDhdk">内容热度、经销商社群求购帖、玩家圈层活跃度。</b>定性补充，发现数据还没反映的新趋势。<div class="src" data-page-node-id="MpfWaKLDdfzpuPb1gTB2Uk">来源：爬虫 + 人工抽样 · 成本：低</div></div>
+        <div class="stars" data-page-node-id="zal80wvZbFKEFIA5OiOLN6">★★☆☆☆</div>
+      </div>
+      <div class="pyr" data-page-node-id="3l9rN19B5kUeqevLF8NFHF">
+        <div class="lv" style="background:#8a5a3a;" data-page-node-id="FvBKy3YCjRlEtBvvr4nw7a">宏观与准入门槛<small data-page-node-id="cCqJzxSirwsEwkLjjvMo7b">政策 · 关税 · 认证</small></div>
+        <div class="bd" data-page-node-id="RYgnKblxD9RaDGAA5lBsfM"><b data-page-node-id="8rGvRsEMg46bdaJJeWq9KT">人均 GDP、汇率、关税税率、强制认证（EPA / DOT / CE / CCC）、外汇管制、物流难度。</b>一票否决项：门槛过不去，需求再大也与你无关。<div class="src" data-page-node-id="A6B1TCyIkHD6QZiQRaJKHW">来源：世界银行 API + 各国海关政策库 · 成本：免费 + 人工整理</div></div>
+        <div class="stars" data-page-node-id="SSq3hHeuZqFsWaADQAePLg">★★★★☆</div>
+      </div>
+    </div>
+    <div class="note" data-page-node-id="MhfBzk2NH5AUtbohgVv6GQ"><b data-page-node-id="ToPwwE7y4jEMe18lmXKIYR">经验法则：</b>任何一层数据单独看都会误判。海关数据说"这个国家进口量大"但趋势在跌 → 可能是红海尾声；趋势暴涨但海关没量 → 可能是还没商业化的伪需求。<b data-page-node-id="q9iRjJ2ZmhHyKHPS8cHIDN">交叉验证，缺一不可。</b></div>
+  </div>
+</section>
+
+<!-- ========== dpi ========== -->
+<section id="dpi" data-page-node-id="6mTEABo7Omw8Z5b53dBYHD">
+  <div class="container" data-page-node-id="WxjMREx1UU9RA0ktwHkOeV">
+    <div class="sec-head" data-page-node-id="xlFuzKMw6QEf4B3MAi9E6w">
+      <div class="en" data-page-node-id="F7dbuxSzGpYnJPQQpe9zws">Layer 2 · The Model</div>
+      <h2 data-page-node-id="zuZJVncr75vNIwGeu2agiF">DPI 需求潜力指数：五个维度，一个分数</h2>
+      <p data-page-node-id="AaKi1Xw0A4uD5wXt1agMNL">对每一个「国家 × 产品」组合打 0-100 分，让机会可排序、可比较、可复盘。</p>
+    </div>
+    <div class="dims" data-page-node-id="Bn1Et8a41IqFWNpMWKlJCp">
+      <div class="dim" data-page-node-id="r7kMfxsvGmeQrzQdFLvO2Y">
+        <div class="w" data-page-node-id="SZ2Id3TywzAT9Bwu0ER8c0">25%</div>
+        <div class="n" data-page-node-id="u8OjMjBidL9I6MXHRtDSOB">需求规模</div>
+        <div class="d" data-page-node-id="8ZZdRq0uIJmONjcBdqWpBv">该国该品类年进口额、进口商数量、终端市场规模。数据源：UN Comtrade + 海关提单。</div>
+      </div>
+      <div class="dim" data-page-node-id="Dt3rtG5D5ry6xsKox5BXqB">
+        <div class="w" data-page-node-id="xN02S0EbfqwMMnlbsdkzE2">25%</div>
+        <div class="n" data-page-node-id="lEg8XrrG2Z4cm4Wytld259">增长动能</div>
+        <div class="d" data-page-node-id="LpGcOYETC4w7R2GDK9BfGv">近 2-3 年进口增速、搜索趋势斜率、电商销量增速。涨得快的市场才有新玩家的位置。</div>
+      </div>
+      <div class="dim minus" data-page-node-id="dlaulMwopgeeA3lLjTu7LX">
+        <div class="w" data-page-node-id="EjmgvHj5o8LtQ07co8GeGn">−20%</div>
+        <div class="n" data-page-node-id="bsRDr58LwfseDkrC4YNcEO">竞争烈度</div>
+        <div class="d" data-page-node-id="E1NGyR9VZPc31E5EnCT2K5">供应商集中度（HHI）、头部进口商占比、价格战程度。越集中越难切入，扣分。</div>
+      </div>
+      <div class="dim minus" data-page-node-id="Ex1JQ5RdeE138fgyXCQmdw">
+        <div class="w" data-page-node-id="lYrbvK5EG2C6UGiPxXFB9H">−15%</div>
+        <div class="n" data-page-node-id="qQQ9ghXr9r3gupyhHA29Gc">进入门槛</div>
+        <div class="d" data-page-node-id="h4r6ZVQ0yZt7P39sB7OxQt">关税、强制认证、外汇管制、物流与政治风险。门槛越高扣分越多。</div>
+      </div>
+      <div class="dim own" data-page-node-id="47cLWXXJ4HCf4FDgosNpMU">
+        <div class="w" data-page-node-id="ZMB7PxrVB5gP24xKC6JzUp">+15%</div>
+        <div class="n" data-page-node-id="ClP6UJm64rwsRnzi7DaR8e">供应链匹配</div>
+        <div class="d" data-page-node-id="NkoqFlHwmExhd2BOm8w70q">你的供应链产品力、价格竞争力、打样与小批量响应速度。<b data-page-node-id="1xHflF5X1eBCTmpnGKf5lE">这是私有变量。</b></div>
+      </div>
+    </div>
+    <div class="note green" data-page-node-id="byncQDVdkB5dgZrx1eaZTH"><b data-page-node-id="ZDDHnGz6Mau3DHV8VzU8U2">为什么供应链匹配是独立维度？</b>前四个维度是公开数据，谁都能算。第五个维度只有你能算——同一个国家同一个产品，对别人是 60 分，对你可能是 80 分。<b data-page-node-id="pPXDdakkIcsINCntDMjJjc">机会从来不是普适的，是"对你来说"的。</b>这就是这套方法论和通用选品工具的本质区别。</div>
+  </div>
+</section>
+
+<!-- ========== calculator ========== -->
+<section id="calc" data-page-node-id="eqJMQbslDyuBJO5mOpYPag">
+  <div class="container" data-page-node-id="CW9wfkcAtk1DTxhrJnQCOF">
+    <div class="sec-head" data-page-node-id="Z81ObFy2GVFpoB7tXKbalR">
+      <div class="en" data-page-node-id="vBSCY1B6Dr4XRr2J7GvDWp">Interactive · Try It</div>
+      <h2 data-page-node-id="96H84qizPD5znhakshPHD9">DPI 在线计算器</h2>
+      <p data-page-node-id="rIao5spfrhYEFBm9dfuEZQ">输入任意产品和目标国家，按数据表现给五个维度打分（0-100），实时算出 DPI 和行动建议。权重可按你的行业经验微调（总和须等于 100）。</p>
+    </div>
+    <div class="calc" data-page-node-id="C6tk0YIV5Md2pFw6AQDur2">
+      <div class="row-inputs" data-page-node-id="UGJ4z0Zr1qCng6DdCZGPph">
+        <div data-page-node-id="ZeLP5hubap4b9giK9UfDpl">
+          <label class="fld" data-page-node-id="Td3oPC3eBSJ9swB1EGxpgv">产品 / 品类（可填 HS 编码）</label>
+          <input type="text" id="inpProduct" placeholder="例：越野摩托车 HS 8711.40 / 锂电池 HS 8507.60" value="越野摩托车 Dirt Bike (HS 8711)" data-page-node-id="P92DXy0MJL8IMzyN8jyAbk">
+        </div>
+        <div data-page-node-id="nYaawmMRyZXLK5XvFsCIxY">
+          <label class="fld" data-page-node-id="94QNr481kT8ojsXjfUpptq">目标国家</label>
+          <input type="text" id="inpCountry" placeholder="例：墨西哥 / 菲律宾 / 阿联酋" value="墨西哥" data-page-node-id="ynKLkt6PCAgSX8Kysm149F">
+        </div>
+      </div>
+
+      <div class="slider-row" data-page-node-id="U9ZHvdxFnFE3RqRvJ0XtJu">
+        <div class="lab" data-page-node-id="LwThI8Pwn2y6rU4yuI0BZb">需求规模<small data-page-node-id="AYkXiMCG98AzDMAkQqhDX8">进口额 · 进口商数量</small></div>
+        <input type="range" id="sScale" min="0" max="100" value="70" data-page-node-id="517WQTDisTHP8MMPZJbJz4">
+        <div class="val" id="vScale" data-page-node-id="Ik49hf4JZzKag4N5SGpCU8">70</div>
+      </div>
+      <div class="slider-row" data-page-node-id="xHGm68E9Fb3jVLI6lkTX5V">
+        <div class="lab" data-page-node-id="iJuHDU5eafSQIinwKpuywI">增长动能<small data-page-node-id="OQkNIZcRLqV8DtzFH5Y4Gs">进口增速 · 趋势斜率</small></div>
+        <input type="range" id="sGrowth" min="0" max="100" value="75" data-page-node-id="lUmguF3kpJmUsCxPpCqBpy">
+        <div class="val" id="vGrowth" data-page-node-id="EMDRYiUGupuWek4H0SpecD">75</div>
+      </div>
+      <div class="slider-row" data-page-node-id="GMIpv4WqvTbLwxsK4B0tLA">
+        <div class="lab" data-page-node-id="LkE9Jz8ULsa5qg0GMSwv7t">竞争烈度<small data-page-node-id="RiddVjvmbUEsahLoPfHdyU">越高 = 竞争越激烈 = 扣分</small></div>
+        <input type="range" id="sComp" min="0" max="100" value="45" data-page-node-id="gHEY2mPsdIB0fYkMYtqVRX">
+        <div class="val" id="vComp" data-page-node-id="djqQlwb2e5w95f5pQmnm08">45</div>
+      </div>
+      <div class="slider-row" data-page-node-id="wBejL7w61dmlzUV5kbaCsr">
+        <div class="lab" data-page-node-id="aDOAXy6K6B5c9iUhpycM99">进入门槛<small data-page-node-id="5raRb9q4DnnFuliBQ7nvqA">越高 = 门槛越高 = 扣分</small></div>
+        <input type="range" id="sBarrier" min="0" max="100" value="35" data-page-node-id="34rMrnQoTKuI7pvPJ2jzHk">
+        <div class="val" id="vBarrier" data-page-node-id="Xj3lMl3kNN5ziYtwSI81BH">35</div>
+      </div>
+      <div class="slider-row" data-page-node-id="74cmujZCpz2aWnRfdkQVbK">
+        <div class="lab" data-page-node-id="WdaHewJCp5HU4wncAp7eF1">供应链匹配<small data-page-node-id="oGyUyn6UlAx01HDJFDV0RX">产品力 · 价格 · 响应速度</small></div>
+        <input type="range" id="sSupply" min="0" max="100" value="80" data-page-node-id="4LfYzhRZk4vKZxvKVcT6vk">
+        <div class="val" id="vSupply" data-page-node-id="SEXRsQrRGCgTTjy6qSXPQK">80</div>
+      </div>
+
+      <details class="weights" data-page-node-id="C7s69Kp9R4JzG7GAhMLbxX">
+        <summary data-page-node-id="wlfAIygw2ewNesuabUyUTh">⚙ 调整维度权重（高级，默认 25 / 25 / 20 / 15 / 15）</summary>
+        <div class="wgrid" data-page-node-id="4LWaH7zEQz336lYtZjcvwr">
+          <div data-page-node-id="GviAGVJmrFXKdgFZTsP7IY"><label data-page-node-id="uAAACxwQfbSQr1qHZHefzt">需求规模 %</label><input type="number" id="wScale" value="25" min="0" max="100" data-page-node-id="iz8URYtDum1PEkx6ICNHAD"></div>
+          <div data-page-node-id="Nt60G5Vf9X25AHECSQ7KOL"><label data-page-node-id="P1LnvotKlUIAZF359MWeub">增长动能 %</label><input type="number" id="wGrowth" value="25" min="0" max="100" data-page-node-id="fJAs8GINRwi5Eq8banMwiJ"></div>
+          <div data-page-node-id="eDjDyLI8EsMCHCY8Jm7Zd3"><label data-page-node-id="WdsKo4zfA0M6EfvzDu0Q7s">竞争烈度 %</label><input type="number" id="wComp" value="20" min="0" max="100" data-page-node-id="wTUCmZoGHNgbPV4UE6dyX9"></div>
+          <div data-page-node-id="PCcslh2oCTnwe6LTCTE0cd"><label data-page-node-id="AhI5ystF2G9BT3VPCFkWbG">进入门槛 %</label><input type="number" id="wBarrier" value="15" min="0" max="100" data-page-node-id="GgiDvHOcfy6i1e7U417uB7"></div>
+          <div data-page-node-id="8Wl2fVR0PAE2L3QRfrAXCz"><label data-page-node-id="uJ4YKPweRa1Rtg58ZPTuqD">供应链匹配 %</label><input type="number" id="wSupply" value="15" min="0" max="100" data-page-node-id="I7NzVJ8lK70nNxkJlMAts5"></div>
+        </div>
+        <div class="wsum" id="wSum" data-page-node-id="e6fDajqqUfJODlJSJyaHcU">权重合计：100 ✓</div>
+      </details>
+
+      <div class="result" data-page-node-id="1ksnEF5CkHckisb7PzEwPh">
+        <div class="score" data-page-node-id="sgCZ166au4QcOysg7E7LVz">
+          <div class="num" id="dpiNum" data-page-node-id="MwaewHonVq5uARgxAMss8K">68</div>
+          <div class="grade" id="dpiGrade" data-page-node-id="34RHwXvKTcUwdZXPgI26Ra">B 级 · 值得验证</div>
+        </div>
+        <div class="verdict" data-page-node-id="qte9G6iy3mfSSRQnAFLBBo">
+          <h4 id="verdictTitle" data-page-node-id="9z4jh3EdK7FmAPdKkbNsf5">B 级机会：进入小规模验证</h4>
+          <p id="verdictText" data-page-node-id="5oIbEvJ3dH4nMCsodS1IE1">分数不错但未到"全力投入"。建议对 50-100 个真实进口商做小成本触达测试，用回复率验证模型判断是否成立。</p>
+          <div class="pair" id="verdictPair" data-page-node-id="DQZMjDov5uDegCDp6jlDtC">越野摩托车 Dirt Bike (HS 8711) × 墨西哥</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== loop ========== -->
+<section id="loop" data-page-node-id="IvnHo2veXMLCJL98EAqV7W">
+  <div class="container" data-page-node-id="FzVYHmhB2PYrbAnipBwXvf">
+    <div class="sec-head" data-page-node-id="qfYCKcub2DqYiCuLNGXCmk">
+      <div class="en" data-page-node-id="WaAO93FQGYItOm1JWPCeEo">Layer 3 · Validation Loop</div>
+      <h2 data-page-node-id="rDwv5MQQSjoLU5nnIpL0Cc">验证闭环：让系统越用越准</h2>
+      <p data-page-node-id="EeYN8zI6DjrDtF2VVd5Y7m">DPI 是排序工具，不是水晶球。每个高分机会都必须走一遍真实验证，结果回写模型——这是方法论里决定成败的一环。</p>
+    </div>
+    <div class="loop" data-page-node-id="mLSLw4tZUiBsu7xUvRwscG">
+      <div class="lp" data-page-node-id="i57f8R1JZFVsm0wOXY2sDY"><div class="no" data-page-node-id="6iiRJwDobkMNkV9NJMuWag">1</div><b data-page-node-id="gJqEsXF4BG2A6n7ChYgbip">锁定进口商</b>海关提单筛出真实进口该品类的公司，过滤品牌商与无关贸易商<span class="arr" data-page-node-id="J9yE0Dm3CFP1bjNoOiMNR8">→</span></div>
+      <div class="lp" data-page-node-id="8Y3Fmg1JnVMxkx3XiyQsOm"><div class="no" data-page-node-id="j8Ps2isQ5y6UCO1qtgDPJB">2</div><b data-page-node-id="lnySKEoWqEABgc9lprq5JG">挖到决策人</b>公司名 → 官网域名 → 决策人 WhatsApp / 邮箱提取<span class="arr" data-page-node-id="4420hr8aL1XL0JBJEzGzy2">→</span></div>
+      <div class="lp" data-page-node-id="xKyymSw67HYDXohNX4HlHd"><div class="no" data-page-node-id="EqqVa17Me4ho92S8I5QuMA">3</div><b data-page-node-id="fQH5EH0KU9knRgnj37viiX">小成本触达</b>50-100 个决策人测试，看回复率与询盘质量<span class="arr" data-page-node-id="tuJGbSZwX9B1hpakDYhpKS">→</span></div>
+      <div class="lp" data-page-node-id="vOnI9FDoGuWFul30V0PB7E"><div class="no" data-page-node-id="mPdLxS61WBkEa5XNBRUZbh">4</div><b data-page-node-id="x4F8BxhFysFzOS8W9z5jKH">深度验证</b>样品单 / 视频验厂 / 线下工厂参观，推进到成交<span class="arr" data-page-node-id="trVwkqrCVR8hELhkOVlpDj">→</span></div>
+      <div class="lp" style="border-color:var(--red);" data-page-node-id="YmEbV69jqQ1M6CjoMr0c8A"><div class="no" style="background:var(--red);" data-page-node-id="hRaoEnZTsvyp6bwITFPHER">5</div><b data-page-node-id="U62Dutv7JeehWr46yRNFLJ">结果回写</b>回复率、询盘率、成交率回填，自动校准 DPI 权重</div>
+    </div>
+    <div class="note" data-page-node-id="I6uM18ygcFd0RUxqh1Ypu8"><b data-page-node-id="nlriQeJwE8980oVTHJd1Fc">闭环的价值：</b>系统说某国 DPI=78，你触达 100 个进口商只有 2 个回复——说明某个维度被高估，下轮降权。跑 3-5 个品类之后，这套校准过的判断力就是别人抄不走的资产。</div>
+  </div>
+</section>
+
+<!-- ========== roadmap ========== -->
+<section id="roadmap" data-page-node-id="r0g1HeqlXU8JCI0lgdL3WN">
+  <div class="container" data-page-node-id="rtHH1ZcAr7oWogIEPx7BWo">
+    <div class="sec-head" data-page-node-id="Ae7JDM2Fo5EWsvx92pM6Od">
+      <div class="en" data-page-node-id="n1OPC5f1i1wozR8rxKRAn9">Execution · 90 Days</div>
+      <h2 data-page-node-id="gE9Eyq4An4juqTjFe94ldb">90 天落地路线：先出结果，再建系统</h2>
+      <p data-page-node-id="2OPKiQrOMPhiaueBvLOb8F">每个阶段都产出可卖钱的成果（机会清单、决策人名单、询盘），系统为生意服务，不为建而建。</p>
+    </div>
+
+    <div class="phase" data-page-node-id="MV2Q6Hs4BksIsypjRPjPU4">
+      <div class="t" data-page-node-id="KAIQRIBxPUKy6PRIWnLQod">第 1-2 周 · 手工 MVP</div>
+      <div class="g" data-page-node-id="djPurtNwGVONXb0z00QWch">目标：不建任何系统，用 Excel + 脚本出第一份机会清单</div>
+      <ul data-page-node-id="nlr2HYlwL9iBVkqbRAdAX8">
+        <li data-page-node-id="eTFZRRMQilJ4LIved0r43Z">确定目标品类的 HS 编码全集（含衍生型号 / 电动款）</li>
+        <li data-page-node-id="UV6H6C8bgBarvKK7vHZune">拉 UN Comtrade 全球进口数据 + 腾道提单数据（TOP 30 国家）</li>
+        <li data-page-node-id="Muc0nRO66EZuPvwx5ztGUe">叠加 Google Trends 关键词趋势，手工打 DPI 分</li>
+        <li data-page-node-id="cJwGYBDzz4WNgHJ64fHfBK">产出：第一版「国家 × 产品」TOP 10 机会清单</li>
+      </ul>
+    </div>
+    <div class="phase" data-page-node-id="Pe7i2YiIut6ciULUMHKVxs">
+      <div class="t" data-page-node-id="SCkTB80YTrg7CZPoEcjRQI">第 3-6 周 · 半自动化 + 首轮验证</div>
+      <div class="g" data-page-node-id="dMCEJgvK9oJhzQkcDkR5A2">目标：验证清单准不准，同时把重复劳动脚本化</div>
+      <ul data-page-node-id="OhVR7gKmD3Pqv8rBgT1uPY">
+        <li data-page-node-id="hkqty0AX2onGqyxAD54DU9">对 TOP 3 国家做进口商提取 + 决策人挖掘 + 小规模触达测试</li>
+        <li data-page-node-id="d1YGBUsG6fvaXxA4xQMgjs">Python 脚本自动化：Comtrade / Trends 定时更新，DPI 自动计算</li>
+        <li data-page-node-id="JK6u6ulDw2FvVLUIvzUPGJ">整理品类准入门槛库（认证 / 关税，TOP 20 国）</li>
+        <li data-page-node-id="W6CaHIkxqkccHAp8mBb7Fr">产出：触达回复率数据 + 校准后的第二版清单</li>
+      </ul>
+    </div>
+    <div class="phase" data-page-node-id="aXmrJaHT5O2Nfuxq1txzWi">
+      <div class="t" data-page-node-id="cny04F1foFqjBcID3U9ZgF">第 7-12 周 · 系统化 + 扩品类</div>
+      <div class="g" data-page-node-id="P6H2WT0uatQEITdbLwXgDA">目标：从"表格"变成"系统"</div>
+      <ul data-page-node-id="XUJuFvTVfq4cXU6pYpKj2t">
+        <li data-page-node-id="xMxsQV6d4RwWEtZLh1Ee98">轻量数据库（SQLite → PostgreSQL）+ Web 看板（国家 × 品类热力图）</li>
+        <li data-page-node-id="OqKcgnLVwEpa4QF3DHlPPT">接入第二个品类验证方法论的泛化能力</li>
+        <li data-page-node-id="x527jBsoS6optCuj3IUPJ5">触达结果回写，完成第一轮权重校准</li>
+        <li data-page-node-id="o0vva8ks5xEIbPc8kMmkqo">产出：可持续运转的需求洞察系统 v1.0</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer data-page-node-id="DvklETIlP0jpNGNVvctaB2">
+  <div class="container" data-page-node-id="0anFneAZNR259eGyjvoLPJ">
+    <b data-page-node-id="EhBOUdFjyvE4DgcNmu30ec">Global Demand Eye</b> · 全球需求洞察方法论<br data-page-node-id="tnk4fuImAzHksL0QoRVMgh">
+    by <b data-page-node-id="gmmxca5Jf7StBth9yGvRTb">Eastar Motors</b> · <a href="https://eye.zhaoguoxing.com" data-page-node-id="LcFG8cFwRunDeHq4wATDYc">eye.zhaoguoxing.com</a><br data-page-node-id="LTq0OGP6a49xFaYAZtwwQu">
+    方法论持续迭代中 · 每做成一笔生意，模型就更准一次
+  </div>
+</footer>
+
+<script>
+(function(){
+  var dims = ['Scale','Growth','Comp','Barrier','Supply'];
+  var W = { Scale:25, Growth:25, Comp:20, Barrier:15, Supply:15 };
+
+  function num(id){ return parseFloat(document.getElementById(id).value) || 0; }
+
+  function calc(){
+    dims.forEach(function(d){ document.getElementById('v'+d).textContent = document.getElementById('s'+d).value; });
+
+    W = { Scale:num('wScale'), Growth:num('wGrowth'), Comp:num('wComp'), Barrier:num('wBarrier'), Supply:num('wSupply') };
+    var sum = W.Scale + W.Growth + W.Comp + W.Barrier + W.Supply;
+    var wsumEl = document.getElementById('wSum');
+    if (Math.abs(sum - 100) < 0.01) {
+      wsumEl.textContent = '权重合计：' + sum + ' ✓'; wsumEl.className = 'wsum ok';
+    } else {
+      wsumEl.textContent = '权重合计：' + sum + ' ✗ （须等于 100，当前按归一化计算）'; wsumEl.className = 'wsum bad';
+    }
+    if (sum <= 0) sum = 1;
+
+    var dpi = ( num('sScale')*W.Scale + num('sGrowth')*W.Growth
+              + (100-num('sComp'))*W.Comp + (100-num('sBarrier'))*W.Barrier
+              + num('sSupply')*W.Supply ) / sum;
+    dpi = Math.max(0, Math.min(100, Math.round(dpi)));
+
+    document.getElementById('dpiNum').textContent = dpi;
+
+    var g, t, x, color;
+    if (dpi >= 75) {
+      g = 'A 级 · 优先投入'; t = 'A 级机会：全力验证，快速抢位';
+      x = '需求、增长、门槛、供应链高度匹配。建议立即锁定该市场头部进口商，2 周内启动决策人触达，抢占先发位置。';
+      color = '#2ecc71';
+    } else if (dpi >= 60) {
+      g = 'B 级 · 值得验证'; t = 'B 级机会：进入小规模验证';
+      x = '分数不错但未到"全力投入"。建议对 50-100 个真实进口商做小成本触达测试，用回复率验证模型判断是否成立。';
+      color = '#f1c40f';
+    } else if (dpi >= 45) {
+      g = 'C 级 · 观察待命'; t = 'C 级机会：保持观察，补齐短板';
+      x = '机会存在但硬伤明显（竞争太激烈 / 门槛偏高 / 供应链不匹配）。建议先补齐最弱的维度，或换邻近市场再算一次。';
+      color = '#e67e22';
+    } else {
+      g = 'D 级 · 暂不进入'; t = 'D 级机会：暂不进入';
+      x = '当前条件下该市场不值得投入。可能是红海、门槛过高或需求不足。把资源让给更高分的机会，3 个月后用新数据重算。';
+      color = '#e74c3c';
+    }
+    document.getElementById('dpiGrade').textContent = g;
+    document.getElementById('dpiGrade').style.background = color;
+    document.getElementById('verdictTitle').textContent = t;
+    document.getElementById('verdictText').textContent = x;
+
+    var p = document.getElementById('inpProduct').value.trim() || '（未填写产品）';
+    var c = document.getElementById('inpCountry').value.trim() || '（未填写国家）';
+    document.getElementById('verdictPair').textContent = p + ' × ' + c;
+  }
+
+  dims.forEach(function(d){
+    document.getElementById('s'+d).addEventListener('input', calc);
+    document.getElementById('w'+d).addEventListener('input', calc);
+  });
+  document.getElementById('inpProduct').addEventListener('input', calc);
+  document.getElementById('inpCountry').addEventListener('input', calc);
+  calc();
+})();
+</script>
+
+</body>
+</html>
