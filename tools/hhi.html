@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>供应商集中度分析 · Global Demand Eye</title>
+<meta name="description" content="分析某国某 HS 编码的进口来源国分布与 HHI 集中度，判断该市场竞争格局（UN Comtrade 数据）。">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="../assets/tools.css">
+</head>
+<body>
+
+<nav>
+  <div class="container">
+    <a class="logo" href="../index.html">Global Demand <span>Eye</span></a>
+    <div class="links">
+      <a href="../index.html#dpi">DPI 模型</a>
+      <a href="../index.html#calc">计算器</a>
+      <div class="dropdown">
+        <span class="dropbtn on">数据工具 ▾</span>
+        <div class="dropdown-menu">
+          <a href="trade.html">全球进口扫描</a>
+          <a href="macro.html">宏观经济查询</a>
+          <a href="hhi.html" class="cur">供应商集中度分析</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<header class="page-head">
+  <div class="container">
+    <h1>供应商集中度分析</h1>
+    <p>选一个目标国家 + HS 编码，看它的进口来自哪些国家、各占多少、集中度（HHI）多高——回答 DPI 模型「竞争烈度」维度：供应越分散，新供应商（你）越有切入机会。</p>
+    <span class="src">数据源：UN Comtrade 公共接口 · HHI = 各来源国份额平方和（0-1）</span>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="panel">
+    <div class="controls">
+      <div class="fld"><label>目标国家（进口国）</label>
+        <input type="text" id="country" list="countryList" value="Mexico" placeholder="输入国家名">
+        <datalist id="countryList"></datalist></div>
+      <div class="fld"><label>HS 编码</label><input type="text" id="hs" value="871140" placeholder="例 871140"></div>
+      <div class="fld"><label>年份</label><select id="year"></select></div>
+      <button class="btn" id="goBtn">开始分析</button>
+      <button class="btn ghost" id="csvBtn" style="display:none;">导出 CSV</button>
+    </div>
+    <div class="status" id="status">先输入国家名（自动联想），分析该市场某品类的进口来源结构。</div>
+  </div>
+
+  <div id="resultArea" style="display:none;">
+    <div class="panel">
+      <div class="kpi-strip" id="kpis"></div>
+      <div class="note" id="verdict"></div>
+    </div>
+    <div class="grid2">
+      <div class="panel">
+        <h3>来源国份额 TOP 15<small id="chartCap"></small></h3>
+        <div class="chart-box"><canvas id="barChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <h3>来源国明细<small id="tblCap"></small></h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>#</th><th>来源国</th><th>金额</th><th>份额</th></tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer><a href="../index.html">Global Demand Eye</a> · 数据：UN Comtrade · Eastar Motors</footer>
+
+<script src="../assets/tools.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const yearSel = $("year");
+for (let y = 2025; y >= 2016; y--) yearSel.insertAdjacentHTML("beforeend", `<option value="${y}" ${y===2023?"selected":""}>${y}</option>`);
+
+let CMAP = null, DATA = null, chart = null;
+
+function setStatus(msg, isErr, spin) {
+  $("status").className = "status" + (isErr ? " err" : "");
+  $("status").innerHTML = (spin ? '<span class="spin"></span>' : "") + msg;
+}
+
+(async () => {
+  try {
+    CMAP = await countryMap(m => setStatus("加载国家列表 …", false, true));
+    const names = Object.values(CMAP).map(c => c.name).sort();
+    $("countryList").innerHTML = names.map(n => `<option value="${n}">`).join("");
+  } catch (e) { setStatus("国家列表加载失败：" + e.message, true); }
+})();
+
+function resolveCountry() {
+  const q = $("country").value.trim().toLowerCase();
+  if (!q) return null;
+  if (/^\d{1,3}$/.test(q)) return +q;
+  const hit = Object.entries(CMAP).find(([, c]) => c.name.toLowerCase() === q)
+          || Object.entries(CMAP).find(([, c]) => c.name.toLowerCase().startsWith(q));
+  return hit ? +hit[0] : null;
+}
+
+$("goBtn").addEventListener("click", async () => {
+  if (!CMAP) { setStatus("国家列表尚未加载完成，请稍候", true); return; }
+  const rep = resolveCountry();
+  if (!rep) { setStatus("未识别到国家，请从联想列表中选择，或直接输入 M49 数字代码", true); return; }
+  const hs = $("hs").value.trim();
+  if (!/^\d{4,10}$/.test(hs)) { setStatus("请输入 4-10 位数字的 HS 编码", true); return; }
+  const year = $("year").value;
+  const repName = (CMAP[rep] && CMAP[rep].name) || rep;
+  $("goBtn").disabled = true;
+  try {
+    const path = `/public/v1/preview/C/A/HS?period=${year}&cmdCode=${hs}&flowCode=M&reporterCode=${rep}&motCode=0&partner2Code=0&customsCode=C00`;
+    const d = await comtradeGet(path, m => setStatus(m, false, true));
+    const best = bestPerKey(d.data || [], "partnerCode");
+    const rows = Object.entries(best)
+      .filter(([code]) => +code !== 0)
+      .map(([code, r]) => ({
+        code: +code,
+        name: (CMAP[+code] && CMAP[+code].name) || ("Code " + code),
+        value: r.primaryValue || 0,
+      }))
+      .filter(r => r.value > 0)
+      .sort((a, b) => b.value - a.value);
+    if (!rows.length) { setStatus(`${repName} 在 ${year} 年无 HS ${hs} 的进口来源记录，试试其他年份或更宽的编码`, true); return; }
+    const total = rows.reduce((s, r) => s + r.value, 0);
+    rows.forEach(r => r.share = r.value / total);
+    const hhi = rows.reduce((s, r) => s + r.share * r.share, 0);
+    const cn = rows.find(r => r.code === 156);
+    DATA = { rows, total, hhi, rep, repName, hs, year, cn };
+    render();
+    setStatus(`完成：${repName} · HS ${hs} · ${year} 年 · ${rows.length} 个来源国`, false, false);
+  } catch (e) {
+    setStatus(e.message, true);
+  } finally {
+    $("goBtn").disabled = false;
+  }
+});
+
+function render() {
+  $("resultArea").style.display = "";
+  $("csvBtn").style.display = "";
+  const d = DATA;
+  const hhiVerdict = d.hhi < 0.15
+    ? ["高度分散", "green", "供应高度分散，没有任何来源国占主导——新供应商最容易切入的市场格局。"]
+    : d.hhi < 0.25
+    ? ["中度集中", "", "存在 1-2 个主要来源国，但长尾空间充足——差异化（价格/账期/服务）仍可切入。"]
+    : ["高度集中", "", "头部来源国占据主导——正面硬刚成本高，建议从细分型号/未被满足的需求切入。"];
+
+  $("kpis").innerHTML = `
+    <div class="kpi"><div class="n">${fmt$(d.total)}</div><div class="d">${d.repName} ${d.year} 年进口额（HS ${d.hs}）</div></div>
+    <div class="kpi"><div class="n">${d.hhi.toFixed(3)}</div><div class="d">HHI 集中度 → ${hhiVerdict[0]}</div></div>
+    <div class="kpi"><div class="n">${d.rows.length}</div><div class="d">来源国数量</div></div>
+    <div class="kpi"><div class="n">${d.cn ? (d.cn.share * 100).toFixed(1) + "%" : "—"}</div><div class="d">中国占其进口份额${d.cn ? "（你面临的直接竞对是中国同行）" : ""}</div></div>`;
+
+  $("verdict").className = "note " + hhiVerdict[1];
+  $("verdict").innerHTML = `<b>竞争判断：</b>${hhiVerdict[2]}` +
+    (d.cn && d.cn.share > 0.3 ? ` 注意：中国供应已占 <b>${(d.cn.share * 100).toFixed(1)}%</b>，说明渠道成熟、需求已被验证，但也意味着同质化竞争——拼的是你供应链的价格与响应速度。`
+    : !d.cn || d.cn.share < 0.05 ? ` 中国份额极低：要么存在准入/认证门槛，要么是空白市场——值得深挖原因。` : "");
+
+  $("tbody").innerHTML = d.rows.map((r, i) => `
+    <tr><td>${i + 1}</td><td>${r.name}${r.code === 156 ? ' <b style="color:#c0392b;">(中国)</b>' : ""}</td>
+    <td>${fmt$(r.value)}</td><td>${(r.share * 100).toFixed(1)}%</td></tr>`).join("");
+
+  const top = d.rows.slice(0, 15);
+  $("chartCap").textContent = `${d.repName} · ${d.year}`;
+  $("tblCap").textContent = `${d.rows.length} 个来源国`;
+  if (chart) chart.destroy();
+  chart = new Chart($("barChart"), {
+    type: "bar",
+    data: { labels: top.map(r => r.name), datasets: [{ data: top.map(r => +(r.share * 100).toFixed(1)), backgroundColor: top.map(r => r.code === 156 ? "#c0392b" : "#1a4a7a"), borderRadius: 5 }] },
+    options: { indexAxis: "y", responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => c.parsed.x + "% (" + fmt$(top[c.dataIndex].value) + ")" } } },
+      scales: { x: { ticks: { callback: v => v + "%" }, grid: { color: "#eef1f5" } }, y: { ticks: { font: { size: 11 } } } } }
+  });
+}
+
+$("csvBtn").addEventListener("click", () => {
+  if (!DATA) return;
+  const head = "rank,supplier_country,value_usd,share_pct";
+  const lines = DATA.rows.map((r, i) => `${i + 1},"${r.name}",${Math.round(r.value)},${(r.share * 100).toFixed(2)}`);
+  downloadCSV(`HHI_${DATA.repName.replace(/\s+/g, "_")}_HS${DATA.hs}_${DATA.year}.csv`, head, lines);
+});
+</script>
+</body>
+</html>

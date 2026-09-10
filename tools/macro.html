@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>宏观经济查询 · Global Demand Eye</title>
+<meta name="description" content="多国宏观经济指标对比：人均 GDP、GDP 增速、人口（World Bank 开放数据）。">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="../assets/tools.css">
+</head>
+<body>
+
+<nav>
+  <div class="container">
+    <a class="logo" href="../index.html">Global Demand <span>Eye</span></a>
+    <div class="links">
+      <a href="../index.html#dpi">DPI 模型</a>
+      <a href="../index.html#calc">计算器</a>
+      <div class="dropdown">
+        <span class="dropbtn on">数据工具 ▾</span>
+        <div class="dropdown-menu">
+          <a href="trade.html">全球进口扫描</a>
+          <a href="macro.html" class="cur">宏观经济查询</a>
+          <a href="hhi.html">供应商集中度分析</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<header class="page-head">
+  <div class="container">
+    <h1>宏观经济查询</h1>
+    <p>一次对比多个国家/地区的宏观经济面：人均 GDP（购买力）、GDP 增速（消费动能）、人口（市场天花板）——DPI 模型里判断市场容量与进入门槛的参考层。</p>
+    <span class="src">数据源：World Bank Open Data API（免注册，官方数据）</span>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="panel">
+    <div class="controls">
+      <div class="fld"><label>国家（ISO3 代码，逗号分隔）</label>
+        <input type="text" id="countries" value="MEX, PHL, ARE, ZAF, BRA" placeholder="例 MEX, PHL, ARE"></div>
+      <div class="fld"><label>对比年份数</label>
+        <select id="span"><option value="3">近 3 年</option><option value="5" selected>近 5 年</option><option value="10">近 10 年</option></select></div>
+      <button class="btn" id="goBtn">开始查询</button>
+      <button class="btn ghost" id="csvBtn" style="display:none;">导出 CSV</button>
+    </div>
+    <div class="status" id="status">常用代码：MEX 墨西哥 · PHL 菲律宾 · ARE 阿联酋 · BRA 巴西 · ZAF 南非 · SAU 沙特 · IDN 印尼 · COL 哥伦比亚</div>
+  </div>
+
+  <div id="resultArea" style="display:none;">
+    <div class="panel">
+      <h3>指标对比表<small>每国取其最新可得年份</small></h3>
+      <div class="tbl-wrap" style="max-height:340px;">
+        <table>
+          <thead><tr><th>国家</th><th>人均 GDP</th><th>GDP 增速</th><th>人口</th><th>数据年</th></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>人均 GDP 走势对比<small id="chartCap"></small></h3>
+      <div class="chart-box"><canvas id="lineChart"></canvas></div>
+    </div>
+    <div class="note green"><b>怎么读：</b>人均 GDP 高 + 增速快 = 消费型市场，适合中高端产品；人均 GDP 低但增速快 = 增量市场，适合性价比产品。这一层不单独构成机会，配合 <a href="trade.html">进口扫描</a> 交叉验证。</div>
+  </div>
+
+</div>
+
+<footer><a href="../index.html">Global Demand Eye</a> · 数据：World Bank · Eastar Motors</footer>
+
+<script src="../assets/tools.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const IND = { "NY.GDP.PCAP.CD": "gdp_pc", "NY.GDP.MKTP.KD.ZG": "gdp_growth", "SP.POP.TOTL": "population" };
+let DATA = null, chart = null;
+
+function setStatus(msg, isErr, spin) {
+  $("status").className = "status" + (isErr ? " err" : "");
+  $("status").innerHTML = (spin ? '<span class="spin"></span>' : "") + msg;
+}
+
+$("goBtn").addEventListener("click", async () => {
+  const codes = $("countries").value.split(/[,，\s]+/).map(s => s.trim().toUpperCase()).filter(s => /^[A-Z]{3}$/.test(s));
+  if (!codes.length) { setStatus("请输入 3 位字母的 ISO3 国家代码（如 MEX）", true); return; }
+  const uniq = [...new Set(codes)];
+  const span = +$("span").value;
+  const start = 2025 - span;
+  $("goBtn").disabled = true;
+  try {
+    const result = {};  // {iso3: {name, gdp_pc:{y:v}, ...}}
+    for (const [ind, key] of Object.entries(IND)) {
+      setStatus(`拉取 ${key} …`, false, true);
+      const r = await fetch(`https://api.worldbank.org/v2/country/${uniq.join(";")}/indicator/${ind}?format=json&per_page=2000&date=${start}:2025`);
+      if (!r.ok) throw new Error("World Bank API HTTP " + r.status);
+      const payload = await r.json();
+      if (!Array.isArray(payload) || payload.length < 2 || !payload[1]) continue;
+      for (const row of payload[1]) {
+        const iso = row.countryiso3code, y = +row.date, v = row.value;
+        if (!iso || v === null) continue;
+        if (!result[iso]) result[iso] = { name: row.country.value, latestYear: 0 };
+        if (!result[iso][key]) result[iso][key] = {};
+        result[iso][key][y] = v;
+        if (y > result[iso].latestYear) result[iso].latestYear = y;
+      }
+    }
+    const found = Object.keys(result).filter(iso => result[iso].gdp_pc || result[iso].population);
+    if (!found.length) throw new Error("未查到数据，请检查 ISO3 代码是否正确");
+    DATA = { result, found, start };
+    render();
+    setStatus(`完成：${found.length} 个国家 · ${start}-2025`, false, false);
+  } catch (e) {
+    setStatus(e.message, true);
+  } finally {
+    $("goBtn").disabled = false;
+  }
+});
+
+function latest(obj) {
+  if (!obj) return [null, null];
+  const ys = Object.keys(obj).map(Number).sort((a, b) => b - a);
+  return ys.length ? [ys[0], obj[ys[0]]] : [null, null];
+}
+
+function render() {
+  $("resultArea").style.display = "";
+  $("csvBtn").style.display = "";
+  const rows = DATA.found.map(iso => {
+    const c = DATA.result[iso];
+    const [gy, gv] = latest(c.gdp_pc), [ry, rv] = latest(c.gdp_growth), [py, pv] = latest(c.population);
+    return { iso, name: c.name, gdp: gv, gdpY: gy, growth: rv, growthY: ry, pop: pv, popY: py };
+  }).sort((a, b) => (b.gdp || 0) - (a.gdp || 0));
+
+  $("tbody").innerHTML = rows.map(r => `
+    <tr><td>${r.name} (${r.iso})</td>
+    <td>${r.gdp ? "$" + Math.round(r.gdp).toLocaleString() : "—"}</td>
+    <td>${r.growth == null ? "—" : `<span class="${r.growth >= 0 ? "up" : "down"}">${r.growth >= 0 ? "+" : ""}${r.growth.toFixed(1)}%</span>`}</td>
+    <td>${r.pop ? fmtNum(Math.round(r.pop)) : "—"}</td>
+    <td>${r.gdpY || r.popY || "—"}</td></tr>`).join("");
+
+  // 人均 GDP 走势
+  const years = [];
+  for (let y = DATA.start; y <= 2025; y++) years.push(y);
+  const datasets = DATA.found.map((iso, i) => {
+    const c = DATA.result[iso];
+    return {
+      label: c.name,
+      data: years.map(y => (c.gdp_pc && c.gdp_pc[y] != null) ? Math.round(c.gdp_pc[y]) : null,
+      borderColor: ["#1a4a7a", "#c0392b", "#27ae60", "#e8a13c", "#8e44ad", "#16a085", "#d35400", "#2c3e50"][i % 8],
+      backgroundColor: "transparent", tension: .3, spanGaps: true,
+    };
+  }).filter(ds => ds.data.some(v => v != null));
+  $("chartCap").textContent = `${DATA.start}-2025 · 美元`;
+  if (chart) chart.destroy();
+  chart = new Chart($("lineChart"), {
+    type: "line",
+    data: { labels: years, datasets },
+    options: { responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: "bottom", labels: { boxWidth: 14, font: { size: 11 } } } },
+      scales: { y: { ticks: { callback: v => "$" + (v / 1000).toFixed(0) + "K" }, grid: { color: "#eef1f5" } } } }
+  });
+}
+
+$("csvBtn").addEventListener("click", () => {
+  if (!DATA) return;
+  const head = "country,iso3,gdp_per_capita_usd,gdp_growth_pct,population,latest_year";
+  const lines = DATA.found.map(iso => {
+    const c = DATA.result[iso];
+    const [, gv] = latest(c.gdp_pc), [, rv] = latest(c.gdp_growth), [, pv] = latest(c.population);
+    return `"${c.name}",${iso},${gv ? Math.round(gv) : ""},${rv != null ? rv.toFixed(2) : ""},${pv ? Math.round(pv) : ""},${c.latestYear}`;
+  });
+  downloadCSV("WorldBank_macro.csv", head, lines);
+});
+</script>
+</body>
+</html>

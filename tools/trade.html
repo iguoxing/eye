@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全球进口扫描 · Global Demand Eye</title>
+<meta name="description" content="输入任意 HS 编码，实时查询全球各国进口额排行（UN Comtrade 数据）。">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="../assets/tools.css">
+</head>
+<body>
+
+<nav>
+  <div class="container">
+    <a class="logo" href="../index.html">Global Demand <span>Eye</span></a>
+    <div class="links">
+      <a href="../index.html#dpi">DPI 模型</a>
+      <a href="../index.html#calc">计算器</a>
+      <div class="dropdown">
+        <span class="dropbtn on">数据工具 ▾</span>
+        <div class="dropdown-menu">
+          <a href="trade.html" class="cur">全球进口扫描</a>
+          <a href="macro.html">宏观经济查询</a>
+          <a href="hhi.html">供应商集中度分析</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<header class="page-head">
+  <div class="container">
+    <h1>全球进口扫描</h1>
+    <p>输入任意 HS 编码和年份，实时拉取全球各国/地区的进口额（或出口额）排行——这是 DPI 模型「需求规模」维度的原始数据，也是圈定目标国家的第一步。</p>
+    <span class="src">数据源：UN Comtrade 公共接口（免注册） · 各国官方海关申报汇总</span>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="panel">
+    <div class="controls">
+      <div class="fld"><label>HS 编码（4-10 位数字）</label><input type="text" id="hs" value="871140" placeholder="例 871140"></div>
+      <div class="fld"><label>年份</label><select id="year"></select></div>
+      <div class="fld"><label>方向</label><select id="flow"><option value="M">进口（谁在买）</option><option value="X">出口（谁在卖）</option></select></div>
+      <button class="btn" id="goBtn">开始查询</button>
+      <button class="btn ghost" id="csvBtn" style="display:none;">导出 CSV</button>
+    </div>
+    <div class="status" id="status">提示：Comtrade 免费接口限速约 1 次/秒，连续查询请稍等几秒。</div>
+  </div>
+
+  <div id="resultArea" style="display:none;">
+    <div class="panel">
+      <div class="kpi-strip" id="kpis"></div>
+    </div>
+    <div class="grid2">
+      <div class="panel">
+        <h3>TOP 20 排行<small id="chartCap"></small></h3>
+        <div class="chart-box"><canvas id="barChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <h3>全部市场明细<small id="tblCap"></small></h3>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>#</th><th>国家/地区</th><th>进口额</th><th>占比</th><th>ISO3</th></tr></thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="note"><b>怎么用：</b>这一步回答 DPI 模型里「哪些国家有真实需求」。规模只是第一维——下一步用 <a href="hhi.html">供应商集中度分析</a> 看竞争，用 <a href="../index.html#calc">DPI 计算器</a> 综合打分。</div>
+  </div>
+
+</div>
+
+<footer><a href="../index.html">Global Demand Eye</a> · 数据：UN Comtrade · Eastar Motors</footer>
+
+<script src="../assets/tools.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const yearSel = $("year");
+for (let y = 2025; y >= 2016; y--) yearSel.insertAdjacentHTML("beforeend", `<option value="${y}" ${y===2023?"selected":""}>${y}</option>`);
+
+let DATA = null, chart = null;
+
+function setStatus(msg, isErr, spin) {
+  $("status").className = "status" + (isErr ? " err" : "");
+  $("status").innerHTML = (spin ? '<span class="spin"></span>' : "") + msg;
+}
+
+$("goBtn").addEventListener("click", async () => {
+  const hs = $("hs").value.trim();
+  if (!/^\d{4,10}$/.test(hs)) { setStatus("请输入 4-10 位数字的 HS 编码", true); return; }
+  const year = $("year").value, flow = $("flow").value;
+  $("goBtn").disabled = true;
+  try {
+    const path = `/public/v1/preview/C/A/HS?period=${year}&cmdCode=${hs}&flowCode=${flow}&partnerCode=0&motCode=0&partner2Code=0&customsCode=C00`;
+    const d = await comtradeGet(path, m => setStatus(m, false, true));
+    let rows = d.data || [];
+    const best = bestPerKey(rows, "reporterCode");
+    const cmap = await countryMap();
+    const list = Object.entries(best)
+      .map(([code, r]) => ({
+        code: +code,
+        name: (cmap[+code] && cmap[+code].name) || ("Code " + code),
+        iso3: (cmap[+code] && cmap[+code].iso3) || "",
+        value: r.primaryValue || 0,
+      }))
+      .filter(x => x.value > 0)
+      .sort((a, b) => b.value - a.value);
+    if (!list.length) { setStatus(`HS ${hs} 在 ${year} 年无${flow === "M" ? "进口" : "出口"}记录，试试其他年份或更宽的编码（如 4 位）`, true); return; }
+    DATA = { list, hs, year, flow, total: list.reduce((s, x) => s + x.value, 0) };
+    render();
+    setStatus(`完成：${list.length} 个市场 · 合计 ${fmt$(DATA.total)} · HS ${hs} · ${year} 年`, false, false);
+  } catch (e) {
+    setStatus(e.message, true);
+  } finally {
+    $("goBtn").disabled = false;
+  }
+});
+
+function render() {
+  $("resultArea").style.display = "";
+  $("csvBtn").style.display = "";
+  const d = DATA;
+  const flowWord = d.flow === "M" ? "进口" : "出口";
+  $("kpis").innerHTML = `
+    <div class="kpi"><div class="n">${d.list.length}</div><div class="d">有${flowWord}记录的市场数</div></div>
+    <div class="kpi"><div class="n">${fmt$(d.total)}</div><div class="d">${d.year} 年全球合计（HS ${d.hs}）</div></div>
+    <div class="kpi"><div class="n">${d.list[0].name}</div><div class="d">最大市场（${fmt$(d.list[0].value)}）</div></div>
+    <div class="kpi"><div class="n">${((d.list.slice(0, 5).reduce((s, x) => s + x.value, 0) / d.total) * 100).toFixed(1)}%</div><div class="d">TOP5 市场集中度</div></div>`;
+
+  $("tbody").innerHTML = d.list.map((r, i) => `
+    <tr><td>${i + 1}</td><td>${r.name}</td><td>${fmt$(r.value)}</td>
+    <td>${(r.value / d.total * 100).toFixed(1)}%</td><td>${r.iso3 || "—"}</td></tr>`).join("");
+
+  const top = d.list.slice(0, 20);
+  $("chartCap").textContent = `按 ${d.year} 年${flowWord}额`;
+  $("tblCap").textContent = `${d.list.length} 个市场`;
+  if (chart) chart.destroy();
+  chart = new Chart($("barChart"), {
+    type: "bar",
+    data: { labels: top.map(r => r.name), datasets: [{ data: top.map(r => r.value), backgroundColor: "#1a4a7a", borderRadius: 5 }] },
+    options: { indexAxis: "y", responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => fmt$(c.parsed.x) } } },
+      scales: { x: { ticks: { callback: v => fmt$(v) }, grid: { color: "#eef1f5" } }, y: { ticks: { font: { size: 11 } } } } }
+  });
+}
+
+$("csvBtn").addEventListener("click", () => {
+  if (!DATA) return;
+  const head = "rank,market,iso3,value_usd,share_pct";
+  const lines = DATA.list.map((r, i) => `${i + 1},"${r.name}",${r.iso3 || ""},${Math.round(r.value)},${(r.value / DATA.total * 100).toFixed(2)}`);
+  downloadCSV(`Comtrade_${DATA.flow}_HS${DATA.hs}_${DATA.year}.csv`, head, lines);
+});
+</script>
+</body>
+</html>

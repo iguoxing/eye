@@ -20,8 +20,15 @@
   nav .container { display: flex; align-items: center; justify-content: space-between; height: 56px; }
   nav .logo { color: #fff; font-weight: 800; font-size: 17px; letter-spacing: .5px; }
   nav .logo span { color: #ff9a8a; }
-  nav .links a { color: rgba(255,255,255,.75); text-decoration: none; font-size: 13.5px; margin-left: 22px; transition: color .2s; }
-  nav .links a:hover { color: #fff; }
+  nav .links { display: flex; align-items: center; }
+  nav .links a, nav .links .dropbtn { color: rgba(255,255,255,.75); text-decoration: none; font-size: 13.5px; margin-left: 22px; transition: color .2s; cursor: pointer; }
+  nav .links a:hover, nav .links .dropbtn:hover { color: #fff; }
+  .dropdown { position: relative; }
+  .dropdown-menu { display: none; position: absolute; right: 0; top: 100%; background: #fff; border-radius: 10px; box-shadow: 0 8px 28px rgba(0,0,0,.22); padding: 8px; min-width: 200px; z-index: 60; }
+  .dropdown:hover .dropdown-menu { display: block; }
+  .dropdown-menu a { display: block; color: #1a1d24; padding: 9px 14px; border-radius: 7px; margin: 0; font-size: 13.5px; white-space: nowrap; }
+  .dropdown-menu a:hover { background: #eef2f7; color: #0f2540; }
+  .dropdown-menu a small { display: block; color: #5c6b7d; font-size: 11px; }
   @media (max-width: 720px) { nav .links { display: none; } }
 
   /* hero */
@@ -133,6 +140,14 @@
       <a href="#calc" data-page-node-id="eDOBJ2DCVDD18yL87TJ3RS">在线计算器</a>
       <a href="#loop" data-page-node-id="DHEj22jfOPbuzD3FoP1DJM">验证闭环</a>
       <a href="#roadmap" data-page-node-id="SwSfWYvEmaSe5w0Kty3PW3">落地路线</a>
+      <div class="dropdown" data-page-node-id="dToolsMenu1">
+        <span class="dropbtn">数据工具 ▾</span>
+        <div class="dropdown-menu">
+          <a href="tools/trade.html">全球进口扫描<small>Comtrade · 各国进口额排行</small></a>
+          <a href="tools/macro.html">宏观经济查询<small>World Bank · GDP/增速/人口</small></a>
+          <a href="tools/hhi.html">供应商集中度分析<small>Comtrade · 来源国份额与 HHI</small></a>
+        </div>
+      </div>
     </div>
   </div>
 </nav>
